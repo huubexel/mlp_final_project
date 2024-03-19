@@ -27,3 +27,7 @@ def preprocesses_data(data: list) -> list:
         preprocessed_data_list.append(preprocessed_row)
 
     return preprocessed_data_list
+
+
+def preprocessed_data_for_bert(preprocessed_data: list):
+    pass
