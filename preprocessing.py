@@ -1,5 +1,5 @@
 import re
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 
 
 def preprocesses_data(data: list) -> list:
@@ -15,10 +15,9 @@ def preprocesses_data(data: list) -> list:
         tweet_text = re.sub(r"@[\w_]+", "", tweet_text)                 # Removes all user tags (@USER) from the tweet
         tweet_text = re.sub(r"\d+", "", tweet_text)                     # Removes all numbers from the tweet
         tweet_text = re.sub(r"#\w+", "", tweet_text)                    # Removes all hashtags from the tweet
-        tweet_text = sent_tokenize(tweet_text, language="dutch")[0]     # Removes all punctuation from the tweet
         tweet_text = tweet_text.replace("URL", "")                      # Removes all the URLs from the tweet
         tweet_text = tweet_text.lower()                                 # Makes the tweet lowercase
-        tweet_text = tweet_text.strip()                                 # Strip excessive whitespaces from the tweet
+        tweet_text = word_tokenize(tweet_text, language="dutch")        # Removes all punctuation from the tweet
         preprocessed_row.append(tweet_text)                             # Append the preprocessed tweet to the list
 
         preprocessed_row.extend(row[2:6])                               # Append the annotations to the list
