@@ -18,9 +18,11 @@ def preprocesses_data(data: list) -> list:
         tweet_text = re.sub(r"\d+", "", tweet_text)                     # Removes all numbers from the tweet
         tweet_text = re.sub(r"#\w+", "", tweet_text)                    # Removes all hashtags from the tweet
         tweet_text = sent_tokenize(tweet_text, language="dutch")[0]     # Removes all punctuation from the tweet
-        tweet_text = tweet_text.replace("URL", "")                      # Removes all the URLs from the tweet
+        tweet_text = tweet_text.replace("URL", "")                      # Removes all the 'URL' from the tweet
+        tweet_text = re.sub(r"\bwww\.[^\s]+\b", "", tweet_text)         # Removes all actual URLs from the tweet
         tweet_text = tweet_text.lower()                                 # Makes the tweet lowercase
         tweet_text = tweet_text.strip()                                 # Strip excessive whitespaces from the tweet
+        print(tweet_text)
         preprocessed_row.append(tweet_text)                             # Append the preprocessed tweet to the list
 
         preprocessed_row.extend(row[2:6])                               # Append the annotations to the list
