@@ -19,6 +19,7 @@ def preprocesses_data(data: list) -> list:
         tweet_text = re.sub(r"#\w+", "", tweet_text)                    # Removes all hashtags from the tweet
         tweet_text = sent_tokenize(tweet_text, language="dutch")[0]     # Removes all punctuation from the tweet
         tweet_text = tweet_text.replace("URL", "")                      # Removes all the 'URL' from the tweet
+        tweet_text = tweet_text.replace("::", ": :")                    # Put a space between emoji's for later usage
         tweet_text = re.sub(r"\bwww\.[^\s]+\b", "", tweet_text)         # Removes all actual URLs from the tweet
         tweet_text = tweet_text.lower()                                 # Makes the tweet lowercase
         tweet_text = tweet_text.strip()                                 # Strip excessive whitespaces from the tweet
