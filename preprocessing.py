@@ -1,6 +1,6 @@
 import re
 from torch import Tensor, tensor                # Tensor is the thing you are getting back from the function tensor()
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 from transformers import BertTokenizer
 
 
@@ -17,13 +17,14 @@ def preprocesses_data(data: list) -> list:
         tweet_text = re.sub(r"@[\w_]+", "", tweet_text)                 # Removes all user tags (@USER) from the tweet
         tweet_text = re.sub(r"\d+", "", tweet_text)                     # Removes all numbers from the tweet
         tweet_text = re.sub(r"#\w+", "", tweet_text)                    # Removes all hashtags from the tweet
-        tweet_text = sent_tokenize(tweet_text, language="dutch")[0]     # Removes all punctuation from the tweet
-        tweet_text = tweet_text.replace("URL", "")                      # Removes all the 'URL' from the tweet
         tweet_text = tweet_text.replace("::", ": :")                    # Put a space between emoji's for later usage
+        tweet_text = tweet_text.replace("URL", "")                      # Removes all the 'URL' from the tweet
         tweet_text = re.sub(r"\bwww\.[^\s]+\b", "", tweet_text)         # Removes all actual URLs from the tweet
+        tweet_text = word_tokenize(tweet_text, language="dutch")        # Tokenize the tweet
+        tweet_text = remove_punctuation(tweet_text)                     # Remove punctuation
+        tweet_text = ' '.join(tweet_text)                               # Join the tweet back together as string
         tweet_text = tweet_text.lower()                                 # Makes the tweet lowercase
         tweet_text = tweet_text.strip()                                 # Strip excessive whitespaces from the tweet
-        print(tweet_text)
         preprocessed_row.append(tweet_text)                             # Append the preprocessed tweet to the list
 
         preprocessed_row.extend(row[2:6])                               # Append the annotations to the list
@@ -32,6 +33,11 @@ def preprocesses_data(data: list) -> list:
         preprocessed_data_list.append(preprocessed_row)
 
     return preprocessed_data_list
+
+
+def remove_punctuation(tweet_text: list[str]) -> list[str]:
+    """ This removes the punctuation in the tweet for every token in the tweet """
+    return [re.sub(r'[^\w\s]', '', part_of_tweet) for part_of_tweet in tweet_text]
 
 
 def preprocessed_data_for_bert(preprocessed_data: list, bert_model_to_use: str) -> (Tensor, Tensor):
