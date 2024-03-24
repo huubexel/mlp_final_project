@@ -18,6 +18,7 @@ def get_bert_embeddings(bert_model_to_use: str, tokens_tensor: Tensor, segments_
     model.eval()
 
     with no_grad():
+
         # Run the data through BERT
         outputs = model(tokens_tensor.to(device_to_train_on), segments_tensor.to(device_to_train_on))
 
