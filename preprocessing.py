@@ -1,43 +1,53 @@
-import re
-from torch import Tensor, tensor                # Tensor is the thing you are getting back from the function tensor()
-from nltk.tokenize import word_tokenize
+from re import sub
+from torch import Tensor, tensor                # Tensor is the object you are getting back from the function tensor()
 from transformers import BertTokenizer
 
 
+def get_labels(data: list):
+    return [row[2] for row in data[1:]]
+
+
 def preprocesses_data(data: list) -> list:
-    """ This preprocesses the tweets in the list, the structure of the list stays the same """
-    preprocessed_data_list = []
+    """ TODO maybe change this text: This preprocesses the tweets in the list, the structure of the list stays the same """
 
-    for row in data:
-        # Make a list where the row number, the preprocessed tweet and the annotation go in.
-        preprocessed_row = [row[0]]
+    # Remove the first line in the dataset because it is metadata
+    data = data[1:]
 
-        # Preprocess the tweet
-        tweet_text = row[1]                                             # Put the tweet text in a var for readability
-        tweet_text = re.sub(r"@[\w_]+", "", tweet_text)                 # Removes all user tags (@USER) from the tweet
-        tweet_text = re.sub(r"\d+", "", tweet_text)                     # Removes all numbers from the tweet
-        tweet_text = re.sub(r"#\w+", "", tweet_text)                    # Removes all hashtags from the tweet
-        tweet_text = tweet_text.replace("::", ": :")                    # Put a space between emoji's for later usage
-        tweet_text = tweet_text.replace("URL", "")                      # Removes all the 'URL' from the tweet
-        tweet_text = re.sub(r"\bwww\.[^\s]+\b", "", tweet_text)         # Removes all actual URLs from the tweet
-        tweet_text = word_tokenize(tweet_text, language="dutch")        # Tokenize the tweet
-        tweet_text = remove_punctuation(tweet_text)                     # Remove punctuation
-        tweet_text = ' '.join(tweet_text)                               # Join the tweet back together as string
-        tweet_text = tweet_text.lower()                                 # Makes the tweet lowercase
-        tweet_text = tweet_text.strip()                                 # Strip excessive whitespaces from the tweet
-        preprocessed_row.append(tweet_text)                             # Append the preprocessed tweet to the list
+    preprocessed_data = []
+    for tweet in data:
+        tweet_text = tweet[1]
 
-        preprocessed_row.extend(row[2:6])                               # Append the annotations to the list
+        # Removes hashtags, user tags and urls
+        tweet_text = sub(r'(@|#|http)\S+', '', tweet_text)
 
-        # Append the preprocessed row to the preprocessed data list
-        preprocessed_data_list.append(preprocessed_row)
+        # Removes the emoji's from the tweet
+        tweet_text = sub(r':[^\s]+:', '', tweet_text)
 
-    return preprocessed_data_list
+        # Removes punctuation
+        tweet_text = sub(r'[^\w\s]', '', tweet_text)
+
+        # Removes all digits
+        tweet_text = sub(r'\d+', '', tweet_text)
+
+        # Removes the string "url"
+        tweet_text = tweet_text.replace('URL', '')
+
+        tweet_text = tweet_text.replace("_", '')
+
+        # Makes all characters lowercase
+        tweet_text = tweet_text.lower()
+
+        # Removes the extra spaces at the beginning or end of the tweet text
+        tweet_text = tweet_text.strip()
+
+        preprocessed_data.append(tweet_text)
+
+    return preprocessed_data
 
 
 def remove_punctuation(tweet_text: list[str]) -> list[str]:
     """ This removes the punctuation in the tweet for every token in the tweet """
-    return [re.sub(r'[^\w\s]', '', part_of_tweet) for part_of_tweet in tweet_text]
+    return [sub(r'[^\w\s]', '', part_of_tweet) for part_of_tweet in tweet_text]
 
 
 def preprocessed_data_for_bert(preprocessed_data: list, bert_model_to_use: str) -> (Tensor, Tensor):
@@ -81,18 +91,23 @@ def preprocessed_data_for_bert(preprocessed_data: list, bert_model_to_use: str) 
 
     # Used to set either 0's or 1's in the segment_ids list for each row
     counter = 0
+    new_batch_size = 8
 
     for row in preprocessed_data:
         # BERT needs a [CLS] at the start of the sentence and [SEP] at the end of the sentence in order to be able
         # to read the sentence, so we append that here
-        marked_tweet_text = "[CLS] " + row[1] + " [SEP]"
+        marked_tweet_text = '[CLS] ' + row + ' [SEP]'
 
         # Tokenize the tweet in the BPE of BERT
-        bpe_tokenized_tweet = bert_tokenizer.tokenize(marked_tweet_text)
+        bpe_tokenized_tweet = bert_tokenizer(marked_tweet_text, return_tensors='pt', truncation=True, padding=True)
 
-        # Sentences can have at maximum 512 BPE tokens, so any sentences that are longer than 512, we don't use.
+        # Using a small batch size makes it so that weak processors can process this code without getting an error
+        bpe_tokenized_tweet['input_ids'] = bpe_tokenized_tweet['input_ids'].repeat(new_batch_size, 1)
+        bpe_tokenized_tweet['attention_mask'] = bpe_tokenized_tweet['attention_mask'].repeat(new_batch_size, 1)
+
+        # Sentences can have max 512 BPE tokens, so any sentences that are longer than 512, we cut behind 512
         if len(bpe_tokenized_tweet) > 512:
-            continue
+            bpe_tokenized_tweet = bpe_tokenized_tweet[:511] + ['[SEP]']
 
         # If the current tweet is longer than longest_tweet_length, this tweets length becomes the longest_tweet_length
         if len(bpe_tokenized_tweet) > longest_tweet_length:
@@ -106,26 +121,8 @@ def preprocessed_data_for_bert(preprocessed_data: list, bert_model_to_use: str) 
 
         counter += 1
 
-    # BERT needs the indexed_tokens (and therefore the segments_ids, because these need to be equal length) to be padded
-    padded_indexed_tokens_list = pad_indexed_tokens_list(indexed_tokens_list, longest_tweet_length)
-    padded_segment_ids_list = pad_segment_ids_list(segments_ids_list, longest_tweet_length)
-
     # Convert the lists to PyTorch Tensors because BERT needs these as inputs
-    tokens_tensor = tensor(padded_indexed_tokens_list)
-    segments_tensor = tensor(padded_segment_ids_list)
+    tokens_tensor = tensor(indexed_tokens_list)
+    segments_tensor = tensor(segments_ids_list)
 
     return tokens_tensor, segments_tensor
-
-
-def pad_indexed_tokens_list(indexed_tokens_list: list, longest_tweet_length: int) -> list:
-    """ Pads each indexed_token_list with 0's until the length of the longest_tweet_length is reached """
-    for indexed_token_list in indexed_tokens_list:
-        indexed_token_list.extend([0] * (longest_tweet_length - len(indexed_token_list)))
-    return indexed_tokens_list
-
-
-def pad_segment_ids_list(segments_ids_list: list, longest_tweet_length: int) -> list:
-    """ Pads each segment_ids_list with 0's or 1's until the length of the longest_tweet_length is reached """
-    for segment_ids_list in segments_ids_list:
-        segment_ids_list.extend([segment_ids_list[0]] * (longest_tweet_length - len(segment_ids_list)))
-    return segments_ids_list
