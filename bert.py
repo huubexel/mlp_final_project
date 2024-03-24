@@ -20,6 +20,7 @@ def get_bert_model(bert_model_to_use: str):
 
 def get_bert_embeddings(model, device_to_train_on: str, tokens_tensor: Tensor, segments_tensor: Tensor):
     with no_grad():
+
         # Run the data through BERT
         outputs = model(tokens_tensor.to(device_to_train_on), segments_tensor.to(device_to_train_on))
 
