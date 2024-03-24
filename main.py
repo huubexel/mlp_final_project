@@ -1,6 +1,6 @@
 from read_data import read_data_from_csv_file
 from preprocessing import preprocesses_data, preprocessed_data_for_bert, get_labels
-from bert import get_bert_embeddings
+from bert import get_bert_model, get_bert_embeddings
 from embeddings import write_to_file
 from bagging import bagging
 
@@ -14,7 +14,8 @@ def main():
 
     # BERT
     tokens_tensor, segments_tensor = preprocessed_data_for_bert(preprocessed_data, bert_model_to_use)
-    embeddings = get_bert_embeddings(bert_model_to_use, tokens_tensor, segments_tensor)
+    bert_model, device_to_train_on = get_bert_model(bert_model_to_use)
+    embeddings = get_bert_embeddings(bert_model, device_to_train_on, tokens_tensor, segments_tensor)
     write_to_file(embeddings)
 
     # Ensemble model
