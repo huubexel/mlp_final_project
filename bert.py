@@ -1,27 +1,30 @@
-from torch import no_grad, Tensor, device
-from torch.cuda import is_available, empty_cache
-from transformers import BertModel
+from torch import no_grad
+from transformers import BertModel, BertTokenizer
 
 
 def get_bert_model(bert_model_to_use: str):
-    # If you have a GPU that has cuda and has that enabled run it on there, otherwise use the CPU
-    device_to_train_on = device('cuda' if is_available() else 'cpu')
-
-    empty_cache()
-
-    # Get the pretrained model
-    model = BertModel.from_pretrained(bert_model_to_use, output_hidden_states=True).to(device_to_train_on)
-
-    # This sets the training mode on false, so BERT won't retrain itself, which is what we want
-    model.eval()
-
-    return model, device_to_train_on
+    """ Returns the BERT model """
+    return BertModel.from_pretrained(bert_model_to_use)
 
 
-def get_bert_embeddings(model, device_to_train_on: str, tokens_tensor: Tensor, segments_tensor: Tensor):
+def get_bert_tokenizer(bert_model_to_use: str):
+    """ Returns the BERT tokenizer """
+    return BertTokenizer.from_pretrained(bert_model_to_use)
+
+
+def get_embeddings_from_bert(model, tokenizer, preprocessed_data):
+    """ Tokenize the tweets so BERT can read them and run the model, return the outputs (embeddings) of the model """
+
+    # Tokenize the tweets so they fit in BERT
+    tokenized_tweets = tokenizer(preprocessed_data,
+                                 return_tensors='pt',
+                                 truncation=True,
+                                 padding=True,
+                                 add_special_tokens=True)
+
     with no_grad():
 
         # Run the data through BERT
-        outputs = model(tokens_tensor.to(device_to_train_on), segments_tensor.to(device_to_train_on))
+        outputs = model(**tokenized_tweets)
 
-        return outputs[2][11]
+        return outputs.last_hidden_state

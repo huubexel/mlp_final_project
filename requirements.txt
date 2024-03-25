@@ -4,3 +4,4 @@ torch == 2.*
 cleantext == 1.*
 scikit-learn == 1.*
 numpy == 1.*
+torchsummary == 1.*
