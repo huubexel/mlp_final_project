@@ -34,6 +34,6 @@ def write_data_to_csv_file(filename: str, data_to_write) -> None:
     """
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)                                    # Get the csv writer
-        writer.writerow(['id', 'offensive_predictions'])                 # Write the two headers
+        writer.writerow(['id', 'offensive_aggregated'])                 # Write the two headers
         for index in range(0, len(data_to_write)):
             writer.writerow([index, data_to_write[index]])
