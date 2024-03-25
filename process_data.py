@@ -1,18 +1,16 @@
-from re import sub
-
 import numpy as np
+from re import sub
 from torch import mean
 
 
 def preprocesses_data(data: list) -> (list, list):
-    """ This processes the way in a way"""
+    """ Processes the data in a way that it removes a lot of tokens and characters not needed for running this ML """
 
     # Remove the first line in the dataset because it is metadata
     data = data[1:]
 
     preprocessed_data = []
     for tweet in data:
-        # Get the label to return later on
 
         # Put the tweet text in a variable
         tweet_text = tweet[1]
