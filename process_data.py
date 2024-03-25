@@ -3,16 +3,28 @@ from re import sub
 from torch import mean
 
 
-def preprocesses_data(data: list) -> (list, list):
-    """ Processes the data in a way that it removes a lot of tokens and characters not needed for running this ML """
+def preprocesses_data(data: list) -> list:
+    """
+        Preprocesses the data by extracting the tweets and removing things like hashtags, urls, user tags,
+        emoji's and punctuation from the text.
 
-    # Remove the first line in the dataset because it is metadata
+        Args:
+            data:   array of shape [N x F],
+                N = number of data samples, this includes the row with column labels
+                F = entries of the data
+
+        Returns:
+            data_rows:  array of shape [N],
+                N = number of preprocessed tweets
+    """
+
+    # Remove the first line in the dataset because it includes the column labels
     data = data[1:]
 
     preprocessed_data = []
     for tweet in data:
 
-        # Put the tweet text in a variable
+        # Extracts the tweet texts from the data
         tweet_text = tweet[1]
 
         # Removes hashtags, user tags and urls
@@ -30,6 +42,7 @@ def preprocesses_data(data: list) -> (list, list):
         # Removes the string "url"
         tweet_text = tweet_text.replace('URL', '')
 
+        # Removes all occurrences of underscore in the text
         tweet_text = tweet_text.replace('_', '')
 
         # Makes all characters lowercase
@@ -44,15 +57,46 @@ def preprocesses_data(data: list) -> (list, list):
 
 
 def get_labels(data: list) -> list:
-    """ Returns all the labels in the data (excluding the first metadata line) """
+    """
+        Extracts the labels from the data set, these are used to train the classifier
+
+        Args:
+            data:   array of shape [N x F],
+                N = number of data samples, this includes the row with column labels
+                F = entries of the data
+
+        Returns:
+            data_rows:  array of shape [N],
+                N = number of extracted labels
+    """
     return [tweet[2] for tweet in data[1:]]
 
 
 def get_mean_embeddings(embeddings):
-    """ For each tweet, get the mean of all the word embeddings, append this to the list, return the list """
+    """
+        Extracts the labels from the data set, these are used to train the classifier
+
+        Args:
+            embeddings:   tensor array of shape [N x F],
+                N = number of data samples
+                F = number of BERT embedding features for all words
+
+        Returns:
+            list:  tensor array of shape [N x F],
+                N = number of data samples
+                F = number of BERT embedding features for each sentence
+    """
     return [mean(embeddings_tensor, dim=0).tolist() for embeddings_tensor in embeddings]
 
 
 def get_as_numpy_array(embeddings):
-    """ Makes a numpy array out of the embeddings and returns that """
+    """
+        Converts the embeddings into a numpy array
+
+        Args:
+            embeddings: tensor array
+
+        Returns:
+            np.array(embeddings):  numpy array
+    """
     return np.array(embeddings)

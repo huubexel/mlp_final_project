@@ -13,7 +13,21 @@ def get_bert_tokenizer(bert_model_to_use: str):
 
 
 def get_embeddings_from_bert(model, tokenizer, preprocessed_data):
-    """ Tokenize the tweets so BERT can read them and run the model, return the outputs (embeddings) of the model """
+    """
+        Tokenizes the data using the BERT model into BPE word-embeddings
+
+        Args:
+            model:              the BERT model
+            tokenizer:          the BERT tokenizer
+            preprocessed_data:  array of shape [N],
+                N = the number of preprocessed tweets in the dataset
+
+        Returns:
+            outputs.last_hidden_state: tensor array of shape [N x F],
+                N = number of data samples
+                F = number of BERT embedding features for all words
+
+    """
 
     # Tokenize the tweets so they fit in BERT
     tokenized_tweets = tokenizer(preprocessed_data,
