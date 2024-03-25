@@ -18,7 +18,7 @@ def main():
     bert_model_to_use = 'google-bert/bert-base-uncased'
     train_data_file = 'data/train_data_offensive_taskA.csv'
     test_data_file = 'data/test_data_text.csv'
-    output_file = 'embeddings/predictions.csv'
+    output_file = 'predictions.csv'
 
     # Get the data that will be the input for BERT
     training_data = read_data_from_csv_file(train_data_file)
@@ -31,8 +31,6 @@ def main():
     # Get the BERT model and tokenizer
     bert_model = get_bert_model(bert_model_to_use)
     bert_tokenizer = get_bert_tokenizer(bert_model_to_use)
-
-    ###
 
     # Get the BERT embeddings
     train_embeddings = get_embeddings_from_bert(bert_model, bert_tokenizer, preprocessed_train_data)
