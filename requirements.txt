@@ -1,6 +1,4 @@
 transformers == 4.*
-nltk == 3.*
 torch == 2.*
-cleantext == 1.*
 scikit-learn == 1.*
 numpy == 1.*
