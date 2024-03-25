@@ -1,18 +1,18 @@
 from re import sub
-from transformers import AutoTokenizer
+
+import numpy as np
+from torch import mean
 
 
 def preprocesses_data(data: list) -> (list, list):
+    """ This processes the way in a way"""
 
     # Remove the first line in the dataset because it is metadata
     data = data[1:]
 
-    labels = []
     preprocessed_data = []
     for tweet in data:
-
         # Get the label to return later on
-        labels.append(tweet[2])
 
         # Put the tweet text in a variable
         tweet_text = tweet[1]
@@ -32,7 +32,7 @@ def preprocesses_data(data: list) -> (list, list):
         # Removes the string "url"
         tweet_text = tweet_text.replace('URL', '')
 
-        tweet_text = tweet_text.replace("_", '')
+        tweet_text = tweet_text.replace('_', '')
 
         # Makes all characters lowercase
         tweet_text = tweet_text.lower()
@@ -40,21 +40,21 @@ def preprocesses_data(data: list) -> (list, list):
         # Removes the extra spaces at the beginning or end of the tweet text
         tweet_text = tweet_text.strip()
 
-        preprocessed_data.append('[CLS] ' + tweet_text + ' [SEP]')
+        preprocessed_data.append(tweet_text)
 
-    return preprocessed_data, labels
+    return preprocessed_data
 
 
-def preprocessed_data_for_bert(preprocessed_data: list, bert_model_to_use: str, device_to_run_on):
+def get_labels(data: list) -> list:
+    """ Returns all the labels in the data (excluding the first metadata line) """
+    return [tweet[2] for tweet in data[1:]]
 
-    # Get the tokenizer from BERT that can do the BERT BPE and BERT indexing
-    bert_tokenizer = AutoTokenizer.from_pretrained(bert_model_to_use)
 
-    # Tokenize the tweet in the BPE of BERT
-    bpe_tokenized_tweet = (bert_tokenizer(preprocessed_data,
-                                          return_tensors='pt',
-                                          truncation=True,
-                                          padding=True,
-                                          add_special_tokens=True).to(device_to_run_on))
+def get_mean_embeddings(embeddings):
+    """ For each tweet, get the mean of all the word embeddings, append this to the list, return the list """
+    return [mean(embeddings_tensor, dim=0).tolist() for embeddings_tensor in embeddings]
 
-    return bpe_tokenized_tweet
+
+def get_as_numpy_array(embeddings):
+    """ Makes a numpy array out of the embeddings and returns that """
+    return np.array(embeddings)
